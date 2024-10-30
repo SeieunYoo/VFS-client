@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import { Metadata } from "next/types";
 import { ItemBox } from "./_components/ItemBox";
 import { Navigation } from "./_components/Navigation";
 
