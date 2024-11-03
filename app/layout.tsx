@@ -1,4 +1,18 @@
+/* eslint-disable react/function-component-definition */
 import "./globals.css";
+
+import type { Metadata } from "next/types";
+
+declare global {
+  interface Window {
+    kakao: any;
+  }
+}
+
+export const metadata: Metadata = {
+  title: "TryOnMe | 내 맘대로 옷 입어봐",
+  description: "가상 옷 피팅 서비스",
+};
 
 export default function RootLayout({
   children,

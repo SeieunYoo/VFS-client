@@ -1,11 +1,5 @@
-import { Metadata } from "next/types";
 import { ItemBox } from "./_components/ItemBox";
 import { Navigation } from "./_components/Navigation";
-
-export const metadata: Metadata = {
-  title: "TryOnMe | 내 맘대로 옷 입어봐",
-  description: "가상 옷 피팅 서비스",
-};
 
 const MainPage = () => {
   return (
