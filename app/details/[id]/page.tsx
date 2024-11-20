@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
 
 import { Camera as CameraIcon } from "@/components/Icons/Camera";
 
@@ -50,6 +53,16 @@ const DetailPage = () => {
         <h2 className="text-black text-2xl font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
           Available at
         </h2>
+        <div className="px-4 pb-2">
+          <div>Online</div>
+          <a
+            className="underline"
+            href="https://www.musinsa.com/products/2678989"
+          >
+            무신사
+          </a>
+        </div>
+        <div className="px-4">Offline</div>
         <div className="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none]">
           <div className="flex items-stretch p-4 gap-3">
             {[
@@ -91,12 +104,14 @@ const DetailPage = () => {
           </div>
         </div>
         <div>
-          <div className="flex py-3">
-            <button className="flex w-full lg:max-w-[412px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 flex-1 bg-black text-white text-base font-bold leading-normal tracking-[0.015em]">
-              <span className="truncate">Try On Live</span>
-              <CameraIcon />
-            </button>
-          </div>
+          <Link href="/fitting">
+            <div className="flex py-3">
+              <button className="flex w-full lg:max-w-[412px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 flex-1 bg-black text-white text-base font-bold leading-normal tracking-[0.015em]">
+                <span className="truncate">Try On Live</span>
+                <CameraIcon />
+              </button>
+            </div>
+          </Link>
         </div>
       </div>
     </>

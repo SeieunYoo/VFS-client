@@ -6,6 +6,7 @@ import type { Metadata } from "next/types";
 declare global {
   interface Window {
     kakao: any;
+    Camera: any;
   }
 }
 

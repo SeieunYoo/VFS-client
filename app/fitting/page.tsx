@@ -1,17 +1,24 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 
+import { LeftArrow } from "@/components/Icons/LeftArrow";
+import Link from "next/link";
+import { LinkIcon } from "@/components/Icons/LinkIcon";
+
 // import WebcamStreamCapture from "./_components/WebCapture";
+
 const serverUrl = "ws://3.34.142.44:8080/signaling";
 const FittingPage = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef2 = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const videoSettings = { width: 372, height: 480, frameInterval: 30 };
+  const videoSettings = { width: 372, height: 480, frameInterval: 1 };
 
-  let socket;
+  let socket: WebSocket | null = null;
   let isStreaming = false;
-  let videoStream = null;
+  let videoStream: MediaStream | null = null;
   let chunkSize = 8000;
 
   const initializeVideoStream = async () => {
@@ -29,14 +36,15 @@ const FittingPage = () => {
     }
   };
 
-  const sendFrame = (video) => {
+  const sendFrame = (video: HTMLVideoElement) => {
     if (!isStreaming) return;
 
     if (canvasRef.current) {
+      console.log(video);
       const context = canvasRef.current.getContext("2d");
-      context?.drawImage(video, 0, 0, 680, 400);
+      context?.drawImage(video, 0, 0, 372, 480);
       const frame = canvasRef.current
-        ?.toDataURL("image/jpeg", 0.5)
+        .toDataURL("image/jpeg", 0.5)
         .split(",")[1] as string;
 
       const totalChunks = Math.ceil(frame.length / chunkSize);
@@ -50,6 +58,7 @@ const FittingPage = () => {
         });
 
         if (socket && socket.readyState === WebSocket.OPEN) {
+          console.log(message);
           socket.send(message);
         }
       }
@@ -73,17 +82,17 @@ const FittingPage = () => {
     initializeVideoStream();
   };
 
-  const handleSocketMessage = (event) => {
+  const handleSocketMessage = (event: MessageEvent) => {
     console.log("displayFrame Success");
     displayFrame(`data:image/jpeg;base64,${event.data}`);
   };
 
-  const handleSocketError = (error) => {
+  const handleSocketError = (error: Event) => {
     console.error("WebSocket error:", error);
   };
 
-  const handleSocketClose = (event) => {
-    console.log("WebSocket connection closed", event);
+  const handleSocketClose = () => {
+    console.log("WebSocket connection closed");
     isStreaming = false;
 
     if (videoStream) {
@@ -94,11 +103,12 @@ const FittingPage = () => {
 
   const displayFrame = (base64Image: string) => {
     const image = new Image();
-    if (canvasRef.current) {
-      const context = canvasRef.current.getContext("2d");
+    if (canvasRef2.current) {
+      const context = canvasRef2.current.getContext("2d");
       image.onload = () => {
         context?.clearRect(0, 0, 372, 480);
         context?.drawImage(image, 0, 0, 372, 480);
+        console.log(image);
       };
     }
     image.onerror = (error) => console.error("Error loading image:", error);
@@ -115,13 +125,46 @@ const FittingPage = () => {
   }, []);
   return (
     <div>
-      <button id="enterRoomBtn1">s</button>
-      <canvas
-        id="localStreamCanvas"
-        width="640"
-        height="480"
-        ref={canvasRef}
-      ></canvas>
+      <div className="fixed bg-white pb-[20px] w-[100vw] pt-[20px] lg:w-[390px]">
+        <LeftArrow />
+      </div>
+      <div className="h-[56px]" />
+      <Image alt="" src="/fitting-example.png" width={372} height={480} />
+      <div className="flex py-3">
+        <button className="flex w-full lg:max-w-[412px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 flex-1 bg-black text-white text-base font-bold leading-normal tracking-[0.015em]">
+          <span
+            className="truncate"
+            onClick={async () => {
+              if (navigator.share) {
+                try {
+                  await navigator.share({
+                    title: "TryOnMe - Virtual Fitting Service",
+                    text: "피팅 예시",
+                    url: window.location.href,
+                  });
+                } catch (error) {
+                  console.error("공유에 실패했습니다:", error);
+                }
+              } else {
+                alert("현재 브라우저는 공유를 지원하지 않습니다.");
+              }
+            }}
+          >
+            Share Link
+          </span>
+          <LinkIcon />
+        </button>
+      </div>
+      {/* <button id="enterRoomBtn1">start fitting</button>
+      <button
+        onClick={() => {
+          handleSocketClose();
+        }}
+      >
+        stop virtial fitting
+      </button>
+      <canvas height="480" ref={canvasRef} width="372"></canvas>
+      <canvas height="480" ref={canvasRef2} width="372"></canvas> */}
     </div>
   );
 };
