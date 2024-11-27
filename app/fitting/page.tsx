@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 
-import { LeftArrow } from "@/components/Icons/LeftArrow";
-import Link from "next/link";
 import { LinkIcon } from "@/components/Icons/LinkIcon";
+
+import { Navigation } from "./_components/Navigation";
 
 // import WebcamStreamCapture from "./_components/WebCapture";
 
@@ -123,35 +123,34 @@ const FittingPage = () => {
   //     }
   //   }
   // }, []);
+  const handleShareFittinImage = () => {
+    async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "TryOnMe - Virtual Fitting Service",
+            text: "피팅 예시 이미지",
+            url: window.location.href,
+          });
+        } catch (error) {
+          console.error("공유에 실패했습니다:", error);
+        }
+      } else {
+        alert("현재 브라우저는 공유를 지원하지 않습니다.");
+      }
+    };
+  };
   return (
     <div>
-      <div className="fixed bg-white pb-[20px] w-[100vw] pt-[20px] lg:w-[390px]">
-        <LeftArrow />
-      </div>
+      <Navigation />
       <div className="h-[56px]" />
-      <Image alt="" src="/fitting-example.png" width={372} height={480} />
+      <Image alt="" height={480} src="/fitting-example.png" width={372} />
       <div className="flex py-3">
-        <button className="flex w-full lg:max-w-[412px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 flex-1 bg-black text-white text-base font-bold leading-normal tracking-[0.015em]">
-          <span
-            className="truncate"
-            onClick={async () => {
-              if (navigator.share) {
-                try {
-                  await navigator.share({
-                    title: "TryOnMe - Virtual Fitting Service",
-                    text: "피팅 예시",
-                    url: window.location.href,
-                  });
-                } catch (error) {
-                  console.error("공유에 실패했습니다:", error);
-                }
-              } else {
-                alert("현재 브라우저는 공유를 지원하지 않습니다.");
-              }
-            }}
-          >
-            Share Link
-          </span>
+        <button
+          className="flex w-full lg:max-w-[412px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 flex-1 bg-black text-white text-base font-bold leading-normal tracking-[0.015em]"
+          onClick={handleShareFittinImage}
+        >
+          <span className="truncate">Share Link</span>
           <LinkIcon />
         </button>
       </div>
