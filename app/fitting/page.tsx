@@ -11,118 +11,120 @@ import { Navigation } from "./_components/Navigation";
 
 const serverUrl = "ws://3.34.142.44:8080/signaling";
 const FittingPage = () => {
-  // const canvasRef = useRef<HTMLCanvasElement>(null);
-  // const canvasRef2 = useRef<HTMLCanvasElement>(null);
-  // const videoRef = useRef<HTMLVideoElement | null>(null);
-  // const videoSettings = { width: 372, height: 480, frameInterval: 1 };
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef2 = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoSettings = { width: 372, height: 480 };
+  let socket: WebSocket | null = null;
+  let videoStream: MediaStream | null = null;
+  let chunkSize = 8000;
+  let captureInterval: NodeJS.Timeout | null = null;
 
-  // let socket: WebSocket | null = null;
-  // let isStreaming = false;
-  // let videoStream: MediaStream | null = null;
-  // let chunkSize = 8000;
+  const initializeVideoStream = async () => {
+    const video = document.createElement("video");
+    video.width = videoSettings.width;
+    video.height = videoSettings.height;
 
-  // const initializeVideoStream = async () => {
-  //   const video = document.createElement("video");
-  //   video.width = videoSettings.width;
-  //   video.height = videoSettings.height;
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = videoStream;
+      video.play();
+      videoRef.current = video;
+    } catch (error) {
+      console.error("Error accessing webcam:", error);
+    }
+  };
 
-  //   try {
-  //     videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-  //     video.srcObject = videoStream;
-  //     video.play();
-  //     video.addEventListener("play", () => sendFrame(video));
-  //   } catch (error) {
-  //     console.error("Error accessing webcam:", error);
-  //   }
-  // };
+  const sendFrame = () => {
+    if (!videoRef.current || !canvasRef.current) return;
 
-  // const sendFrame = (video: HTMLVideoElement) => {
-  //   if (!isStreaming) return;
+    const video = videoRef.current;
+    const context = canvasRef.current.getContext("2d");
+    context?.drawImage(video, 0, 0, 372, 480);
 
-  //   if (canvasRef.current) {
-  //     console.log(video);
-  //     const context = canvasRef.current.getContext("2d");
-  //     context?.drawImage(video, 0, 0, 372, 480);
-  //     const frame = canvasRef.current
-  //       .toDataURL("image/jpeg", 0.5)
-  //       .split(",")[1] as string;
+    const frame = canvasRef.current
+      .toDataURL("image/jpeg", 0.5)
+      .split(",")[1] as string;
 
-  //     const totalChunks = Math.ceil(frame.length / chunkSize);
+    const totalChunks = Math.ceil(frame.length / chunkSize);
 
-  //     for (let i = 0; i < totalChunks; i++) {
-  //       const chunk = frame.slice(i * chunkSize, (i + 1) * chunkSize);
-  //       const message = JSON.stringify({
-  //         chunk,
-  //         chunkIndex: i,
-  //         totalChunks,
-  //       });
+    for (let i = 0; i < totalChunks; i++) {
+      const chunk = frame.slice(i * chunkSize, (i + 1) * chunkSize);
+      const message = JSON.stringify({
+        chunk,
+        chunkIndex: i,
+        totalChunks,
+      });
 
-  //       if (socket && socket.readyState === WebSocket.OPEN) {
-  //         console.log(message);
-  //         socket.send(message);
-  //       }
-  //     }
-  //   }
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(message);
+      }
+    }
+  };
 
-  //   setTimeout(() => sendFrame(video), 1);
-  // };
+  const setupWebSocket = () => {
+    socket = new WebSocket(serverUrl);
 
-  // const setupWebSocket = () => {
-  //   socket = new WebSocket(serverUrl);
+    socket.onopen = handleSocketOpen;
+    socket.onmessage = handleSocketMessage;
+    socket.onerror = handleSocketError;
+    socket.onclose = handleSocketClose;
+  };
 
-  //   socket.onopen = handleSocketOpen;
-  //   socket.onmessage = handleSocketMessage;
-  //   socket.onerror = handleSocketError;
-  //   socket.onclose = handleSocketClose;
-  // };
+  const handleSocketOpen = () => {
+    console.log("WebSocket connection established");
+    initializeVideoStream();
+    startCapturingFrames();
+  };
 
-  // const handleSocketOpen = () => {
-  //   console.log("WebSocket connection established");
-  //   isStreaming = true;
-  //   initializeVideoStream();
-  // };
+  const startCapturingFrames = () => {
+    if (!captureInterval) {
+      captureInterval = setInterval(() => {
+        sendFrame();
+      }, 5000); // 5초 간격으로 프레임 전송
+    }
+  };
 
-  // const handleSocketMessage = (event: MessageEvent) => {
-  //   console.log("displayFrame Success");
-  //   displayFrame(`data:image/jpeg;base64,${event.data}`);
-  // };
+  const stopCapturingFrames = () => {
+    if (captureInterval) {
+      clearInterval(captureInterval);
+      captureInterval = null;
+    }
+  };
 
-  // const handleSocketError = (error: Event) => {
-  //   console.error("WebSocket error:", error);
-  // };
+  const handleSocketMessage = (event: MessageEvent) => {
+    console.log("displayFrame Success");
+    displayFrame(`data:image/jpeg;base64,${event.data}`);
+  };
 
-  // const handleSocketClose = () => {
-  //   console.log("WebSocket connection closed");
-  //   isStreaming = false;
+  const handleSocketError = (error: Event) => {
+    console.error("WebSocket error:", error);
+  };
 
-  //   if (videoStream) {
-  //     videoStream.getTracks().forEach((track) => track.stop());
-  //     videoStream = null;
-  //   }
-  // };
+  const handleSocketClose = () => {
+    console.log("WebSocket connection closed");
+    stopCapturingFrames();
 
-  // const displayFrame = (base64Image: string) => {
-  //   const image = new Image();
-  //   if (canvasRef2.current) {
-  //     const context = canvasRef2.current.getContext("2d");
-  //     image.onload = () => {
-  //       context?.clearRect(0, 0, 372, 480);
-  //       context?.drawImage(image, 0, 0, 372, 480);
-  //       console.log(image);
-  //     };
-  //   }
-  //   image.onerror = (error) => console.error("Error loading image:", error);
-  //   image.src = base64Image;
-  // };
+    if (videoStream) {
+      videoStream.getTracks().forEach((track) => track.stop());
+      videoStream = null;
+    }
+  };
 
-  // useEffect(() => {
-  //   if (document !== null) {
-  //     const enterRoomBtn = document.getElementById("enterRoomBtn1");
-  //     if (enterRoomBtn) {
-  //       enterRoomBtn.addEventListener("click", setupWebSocket);
-  //     }
-  //   }
-  // }, []);
+  const displayFrame = (base64Image: string) => {
+    const imageElement = document.createElement("img"); // HTMLImageElement 생성
+    imageElement.onerror = (error) =>
+      console.error("Error loading image:", error);
+    imageElement.src = base64Image; // Base64 이미지를 src로 설정
+    if (canvasRef2.current) {
+      const context = canvasRef2.current.getContext("2d");
+      imageElement.onload = () => {
+        context?.clearRect(0, 0, 372, 480);
+        context?.drawImage(imageElement, 0, 0, 372, 480);
+      };
+    }
+  };
+
   const handleShareFittinImage = () => {
     async () => {
       if (navigator.share) {
@@ -140,6 +142,7 @@ const FittingPage = () => {
       }
     };
   };
+
   return (
     <div>
       <Navigation />
@@ -154,7 +157,13 @@ const FittingPage = () => {
           <LinkIcon />
         </button>
       </div>
-      {/* <button id="enterRoomBtn1">start fitting</button>
+      <button
+        onClick={() => {
+          setupWebSocket();
+        }}
+      >
+        start fitting
+      </button>
       <button
         onClick={() => {
           handleSocketClose();
@@ -163,7 +172,7 @@ const FittingPage = () => {
         stop virtial fitting
       </button>
       <canvas height="480" ref={canvasRef} width="372"></canvas>
-      <canvas height="480" ref={canvasRef2} width="372"></canvas> */}
+      <canvas height="480" ref={canvasRef2} width="372"></canvas>
     </div>
   );
 };
