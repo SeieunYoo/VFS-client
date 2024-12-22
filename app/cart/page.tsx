@@ -39,7 +39,7 @@ const CartPage = () => {
   ) => {
     try {
       const response = await axios.post(
-        "http://localhost:3001/cart/add", // Express 서버의 엔드포인트
+        "http://localhost:3001/cart/add",
         {
           user_id: userId,
           product_id: productId,
@@ -63,7 +63,7 @@ const CartPage = () => {
   ) => {
     try {
       const response = await axios.post(
-        "http://localhost:3001/cart/remove", // Express 서버의 엔드포인트
+        "http://localhost:3001/cart/remove",
         {
           user_id: userId,
           product_id: productId,
